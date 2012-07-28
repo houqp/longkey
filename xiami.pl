@@ -68,7 +68,8 @@ while (<xml>) {
 	push (@titles, $1) if /^<title>/ && /\[([^\[\]]+)\]/;
 	push (@locs, &locdecode($1)) if m|^<location>(.*)</location>$|;
 	$album = $1 if /^<album_name>/ && /\[([^\[\]]+)\]/;
-	$artist = $1 if m|^<artist>(.*)</artist>$|;
+	#$artist = $1 if m|^<artist>(.*)</artist>$|;
+	$artist = $1 if /^<artist>/ && /\[([^\[\]]+)\]/;
 	$picurl = $1 if m|^<pic>(.*)</pic>$|;
 }
 
