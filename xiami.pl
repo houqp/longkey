@@ -10,6 +10,13 @@ sub unescape {
 	return $str;
 }
 
+sub sub_escape {
+	my $str = shift;
+	$str =~ s/\ /_/g;
+	$str =~ s/'/_/g;
+	return $str;
+}
+
 sub locdecode {
 	my $loc = shift;
 	my $n = int(substr($loc, 0, 1));
@@ -94,7 +101,7 @@ system("echo '$aid' > '$music/$artist/$album/aid'");
 
 for (my $i = 0; $i < @titles; $i++) {
 	my $track = $i + 1;
-	my $title = $titles[$i];
+	my $title = sub_escape($titles[$i]);
 	my $loc = $locs[$i];
 	my $path = "$music/$artist/$album/$title.mp3";
 	print "getting #$track - $title\n";
