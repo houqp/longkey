@@ -49,77 +49,93 @@ sub locdecode {
 }
 
 my $aid;
+my $afile;
 my $music;
 my $retry;
 
 GetOptions(
 	'aid:s' => \$aid,
+	'afile:s' => \$afile,
 	'path:s' => \$music,
 	'retry:s' => \$retry
 );
 
-die if (!$aid || !$music);
+die if ((!$afile && !$aid) || !$music);
 
 # retry default to 20
 if (!$retry) {
 	$retry = 20;
 }
 
-print "aid = $aid\n";
-print "path = $music\n";
-print "retry = $retry\n";
-
-my $url = "http://www.xiami.com//song/playlist/id/$aid/type/1";
-
-print "Getting song.xml\n";
-system("wget $url 2>/dev/null -O song.xml");
-open(xml, "wget $url 2>/dev/null -O -|");
-my @titles;
-my @locs;
-my $album;
-my $artist;
-my $picurl;
-while (<xml>) {
-	push (@titles, $1) if /^<title>/ && /\[([^\[\]]+)\]/;
-	push (@locs, &locdecode($1)) if m|^<location>(.*)</location>$|;
-	$album = $1 if /^<album_name>/ && /\[([^\[\]]+)\]/;
-	#$artist = $1 if m|^<artist>(.*)</artist>$|;
-	$artist = $1 if /^<artist>/ && /\[([^\[\]]+)\]/;
-	$picurl = $1 if m|^<pic>(.*)</pic>$|;
+my @aid_arr;
+if ($aid) {
+	push(@aid_arr, $aid);
 }
-
-print "$album - $artist\n";
-print join("\n", @titles);
-print "\n";
-
-my $coverfile = "$music/$artist/$album/cover.jpg";
-system("mkdir -p '$music'") if (! -e "$music");
-system("mkdir -p '$music/$artist/'") if (! -e "$music/$artist");
-system("mkdir -p '$music/$artist/$album'") if (! -e "$music/$artist/$album");
-system("wget -O '$coverfile' $picurl");
-system("echo '$aid' > '$music/$artist/$album/aid'");
-
-for (my $i = 0; $i < @titles; $i++) {
-	my $track = $i + 1;
-	my $title = sub_escape($titles[$i]);
-	my $loc = $locs[$i];
-	my $path = "$music/$artist/$album/$title.mp3";
-	print "getting #$track - $title\n";
-	my @s = stat($path);
-	if (!$s[7] || $s[7] < 1000) {
-		my $count = 0;
-		while (system("wget $loc --no-proxy -O '$path'") == 2048) {
-			$count = $count + 1;
-			if ($count > $retry) {
-				last;
-			}
-			print "retrying!\n";
-		}
-		system("mp3info2 -a '$artist' -t '$title' -l '$album' -n $track '$path'");
-	} else {
-		print "skipped $path\n";
-		system("mp3info2 -F \"APIC < '$coverfile'\" '$path'");
+if ($afile) {
+	open my $info, $afile or die "Could not open $afile: $!";
+	while (my $aid = <$info>) {
+		#escape '\n'
+		$aid =~ s/\n//g;
+		push(@aid_arr, $aid);
 	}
 }
 
+print "aid array = @aid_arr\n";
+print "path = $music\n";
+print "retry = $retry\n";
 
+foreach (@aid_arr) {
+	my $aid = $_;
+	my $url = "http://www.xiami.com//song/playlist/id/$aid/type/1";
+
+	print "Getting song.xml\n";
+	system("wget $url 2>/dev/null -O song.xml");
+	open(xml, "wget $url 2>/dev/null -O -|");
+	my @titles;
+	my @locs;
+	my $album;
+	my $artist;
+	my $picurl;
+	while (<xml>) {
+		push (@titles, $1) if /^<title>/ && /\[([^\[\]]+)\]/;
+		push (@locs, &locdecode($1)) if m|^<location>(.*)</location>$|;
+		$album = $1 if /^<album_name>/ && /\[([^\[\]]+)\]/;
+		#$artist = $1 if m|^<artist>(.*)</artist>$|;
+		$artist = $1 if /^<artist>/ && /\[([^\[\]]+)\]/;
+		$picurl = $1 if m|^<pic>(.*)</pic>$|;
+	}
+
+	print "$album - $artist\n";
+	print join("\n", @titles);
+	print "\n";
+
+	my $coverfile = "$music/$artist/$album/cover.jpg";
+	system("mkdir -p '$music'") if (! -e "$music");
+	system("mkdir -p '$music/$artist/'") if (! -e "$music/$artist");
+	system("mkdir -p '$music/$artist/$album'") if (! -e "$music/$artist/$album");
+	system("wget -O '$coverfile' $picurl");
+	system("echo '$aid' > '$music/$artist/$album/aid'");
+
+	for (my $i = 0; $i < @titles; $i++) {
+		my $track = $i + 1;
+		my $title = sub_escape($titles[$i]);
+		my $loc = $locs[$i];
+		my $path = "$music/$artist/$album/$title.mp3";
+		print "getting #$track - $title\n";
+		my @s = stat($path);
+		if (!$s[7] || $s[7] < 1000) {
+			my $count = 0;
+			while (system("wget $loc --no-proxy -O '$path'") == 2048) {
+				$count = $count + 1;
+				if ($count > $retry) {
+					last;
+				}
+				print "retrying!\n";
+			}
+			system("mp3info2 -a '$artist' -t '$title' -l '$album' -n $track '$path'");
+		} else {
+			print "skipped $path\n";
+			system("mp3info2 -F \"APIC < '$coverfile'\" '$path'");
+		}
+	}
+}
