@@ -43,16 +43,24 @@ sub locdecode {
 
 my $aid;
 my $music;
+my $retry;
 
 GetOptions(
 	'aid:s' => \$aid,
-	'path:s' => \$music
+	'path:s' => \$music,
+	'retry:s' => \$retry
 );
 
 die if (!$aid || !$music);
 
+# retry default to 20
+if (!$retry) {
+	$retry = 20;
+}
+
 print "aid = $aid\n";
 print "path = $music\n";
+print "retry = $retry\n";
 
 my $url = "http://www.xiami.com//song/playlist/id/$aid/type/1";
 
@@ -92,7 +100,14 @@ for (my $i = 0; $i < @titles; $i++) {
 	print "getting #$track - $title\n";
 	my @s = stat($path);
 	if (!$s[7] || $s[7] < 1000) {
-		system("wget $loc --no-proxy -O '$path'");
+		my $count = 0;
+		while (system("wget $loc --no-proxy -O '$path'") == 2048) {
+			$count = $count + 1;
+			if ($count > $retry) {
+				last;
+			}
+			print "retrying!\n";
+		}
 		system("mp3info2 -a '$artist' -t '$title' -l '$album' -n $track '$path'");
 	} else {
 		print "skipped $path\n";
