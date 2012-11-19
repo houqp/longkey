@@ -36,10 +36,16 @@ perl xiami.pl -aid 169898 -path /music/path
 To download multiple ablums at one shot, you can put all the album number in a file, one at a line, then issue:
 
 ```bash
-perl xiami.pl -afile YOUR_FILE -path /music/path
+perl xiami.pl -afile ALBUM_LIST -path /music/path
 ```
 
 You can also use `-retry 10` to set retry times to 10, the default value is 20.
+
+`get_album.py` can help you parse all the albums of a singer, so you can download albums in batch:
+
+```bash
+python get_album.py 216 > ALBUM_LIST
+```
 
 
 Thanks
