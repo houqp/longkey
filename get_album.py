@@ -11,12 +11,16 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     r = requests.get('http://www.xiami.com/artist/album/id/'+args.artist_id)
-    page_div = r.content.split('<div class="all_page">')[1].split('</div>')[0]
-    page_num = len(page_div.split('p_num')) - 1
+    try:
+        page_div = r.content.split('<div class="all_page">')[1].split('</div>')[0]
+    except IndexError:
+        page_num = 1
+    else:
+        page_num = len(page_div.split('p_num')) - 1
     #print("Total number of pages: "+str(page_num))
     for i in range(page_num):
         #print("parsing page: "+str(i+1))
-        r = requests.get('http://www.xiami.com/artist/album/id/216/d//p//page/'+str(i+1))
+        r = requests.get('http://www.xiami.com/artist/album/id/'+args.artist_id+'/d//p//page/'+str(i+1))
         album_list = r.content.split("playalbum('")
         # remove useless header
         album_list.pop(0)
