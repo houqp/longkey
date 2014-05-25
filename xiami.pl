@@ -206,7 +206,7 @@ foreach (@aid_arr) {
 	my $artist;
 	my $picurl;
 	while (<xml>) {
-		push (@titles, $1) if /^<title>/ && /\[([^\[\]]+)\]/;
+		push (@titles, $1) if /<title>/ && /\[([^\[\]]+)\]/;
 		push (@locs, &locdecode($1)) if m|^<location>(.*)</location>$|;
 		$album = $1 if /^<album_name>/ && /\[([^\[\]]+)\]/;
 		#$artist = $1 if m|^<artist>(.*)</artist>$|;
@@ -215,8 +215,9 @@ foreach (@aid_arr) {
 	}
 
 	print "$album - $artist\n";
+	print "---------------------\n";
 	print join("\n", @titles);
-	print "\n";
+	print "\n---------------------\n";
 
 	my %tag_info = (
 		'artist' => $artist,
