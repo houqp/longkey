@@ -11,17 +11,18 @@ Dependencies
 * perl
 * wget
 * mp3info2
+* requests
 
 For Debian:
 
 ```bash
-apt-get install perl wget libmp3-tag-perl
+apt-get install perl wget libmp3-tag-perl python-requests
 ```
 
 For Gentoo:
 
 ```bash
-emerge -av perl wget MP3-Tag
+emerge -av perl wget MP3-Tag requests
 ```
 
 Usage

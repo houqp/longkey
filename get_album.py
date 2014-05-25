@@ -18,11 +18,10 @@ if __name__ == "__main__":
     try:
         page_div = r.content.split('<div class="all_page">')[1]\
                     .split('</div>')[0]
-        page_num = len(page_div.split('p_num')) - 1
     except IndexError:
         page_num = 1
     else:
-        pass
+        page_num = len(page_div.split('p_num')) - 1
     if args.d:
         print("Total number of pages: "+str(page_num))
     for i in range(page_num):
